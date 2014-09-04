@@ -1,0 +1,118 @@
+['android-library', 'maven', 'signing'].each {
+  apply plugin: it
+}
+
+enum BuildType {
+  DEVELOPMENT,
+  CI,
+  RELEASE
+}
+
+BuildType build = BuildType.DEVELOPMENT
+
+def sonatypeUrl = ''
+def versionPostfix = ''
+
+switch (build) {
+  case BuildType.RELEASE:
+    sonatypeUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    break
+  case BuildType.CI:
+    sonatypeUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+    versionPostfix = '-SNAPSHOT'
+    break
+  case BuildType.DEVELOPMENT:
+    versionPostfix = '-DEV'
+}
+
+group = 'com.aldoborrero'
+def MAJOR = 1
+def MINOR = 0
+def PATCH = 0
+version = "${MAJOR}.${MINOR}.${PATCH}${versionPostfix}"
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+android {
+  compileSdkVersion rootProject.ext.compileSdkVersion
+  buildToolsVersion rootProject.ext.buildToolsVersion
+
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion rootProject.ext.targetSdkVersion
+  }
+
+  buildTypes {
+    release {
+      runProguard false
+    }
+  }
+}
+
+if (build == BuildType.RELEASE) {
+  signing {
+    sign configurations.archives
+  }
+} else {
+  task signArchives {
+  }
+}
+
+uploadArchives {
+  repositories {
+    if (build == BuildType.DEVELOPMENT) {
+      mavenLocal()
+    } else {
+      mavenDeployer {
+        if (build == BuildType.RELEASE) {
+          beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+        }
+
+        repository(url: sonatypeUrl) {
+          authentication(userName: NEXUS_USERNAME, password: NEXUS_PASSWORD)
+        }
+
+        pom.artifactId = 'bindableadapters'
+
+        pom.project {
+          name 'Bindable Adapters for Android'
+          packaging 'jar'
+          description 'An implementation of BaseAdapter which uses the new/bind pattern and view holder pattern for its views.'
+          url 'https://github.com/aldoborrero/bindableadapters'
+
+          scm {
+            url 'scm:git@github.com:aldoborrero/bindableadapters.git'
+            connection 'scm:git:git://github.com/aldoborrero/bindableadapters.git'
+            developerConnection 'scm:git@github.com:aldoborrero/bindableadapters.git'
+          }
+
+          issueManagement {
+            system 'GitHub Issues'
+              url 'https://github.com/aldoborrero/bindableadapters/issues'
+            }
+
+          licenses {
+            license {
+              name 'Apache 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+            }
+          }
+
+          developers {
+            developer {
+              id 'aldoborrero'
+              name 'Aldo Borrero'
+            }
+          }
+        }
+      }
+    }
+  }
+}

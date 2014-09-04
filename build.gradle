@@ -1,0 +1,27 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:0.12.2'
+  }
+}
+
+allprojects {
+  repositories {
+    mavenCentral()
+  }
+}
+
+ext {
+  compileSdkVersion = 19
+  buildToolsVersion = '19.1.0'
+  minSdkVersion = 14
+  targetSdkVersion = 19
+
+  gradleVersion = '1.12'
+}
+
+task wrapper(type: Wrapper) {
+  gradleVersion = rootProject.ext.gradleVersion
+}
