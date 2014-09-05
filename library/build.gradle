@@ -8,7 +8,7 @@ enum BuildType {
   RELEASE
 }
 
-BuildType build = BuildType.DEVELOPMENT
+BuildType build = BuildType.CI
 
 def sonatypeUrl = ''
 def versionPostfix = ''
@@ -79,7 +79,9 @@ uploadArchives {
           authentication(userName: NEXUS_USERNAME, password: NEXUS_PASSWORD)
         }
 
+        pom.groupId = project.group
         pom.artifactId = 'bindableadapters'
+        pom.version = project.version
 
         pom.project {
           name 'Bindable Adapters for Android'
